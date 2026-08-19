@@ -4,5 +4,5 @@ compatibility_date = "2026-08-19"
 
 [[d1_databases]]
 binding = "DB"
-database_name = "cms-api-db"
-database_id = "83fcdebe-2d32-405c-8381-eb86fd27d82e"
+database_name = "iroda-db"
+database_id = "b4f9321f-7afa-428a-981f-88c7423f1dad"
