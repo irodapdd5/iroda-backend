@@ -1251,6 +1251,264 @@ export default {
         });
 
           }
+
+      // ==================================================
+// EVENT PAMPHLETS / JADWAL EVENT
+// ==================================================
+
+
+// ==================================================
+// GET SEMUA PAMPHLET
+// ==================================================
+
+if (
+  url.pathname === "/event-schedules" &&
+  request.method === "GET"
+) {
+
+  const result =
+    await env.DB
+      .prepare(`
+        SELECT
+          id,
+          image,
+          created_at
+        FROM event_pamphlets
+        ORDER BY
+          id DESC
+      `)
+      .all();
+
+
+  return Response.json({
+
+    success: true,
+
+    data:
+      result.results || []
+
+  }, {
+    headers
+  });
+
+}
+
+
+// ==================================================
+// EVENT PAMPHLET ID
+// ==================================================
+
+const eventPamphletMatch =
+  url.pathname.match(
+    /^\/event-schedules\/(\d+)$/
+  );
+
+
+// ==================================================
+// GET SATU PAMPHLET
+// ==================================================
+
+if (
+  eventPamphletMatch &&
+  request.method === "GET"
+) {
+
+  const id =
+    Number(eventPamphletMatch[1]);
+
+
+  const pamphlet =
+    await env.DB
+      .prepare(`
+        SELECT
+          id,
+          image,
+          created_at
+        FROM event_pamphlets
+        WHERE id = ?
+      `)
+      .bind(id)
+      .first();
+
+
+  if (!pamphlet) {
+
+    return Response.json({
+
+      success: false,
+
+      message:
+        "Pamflet tidak ditemukan"
+
+    }, {
+      status: 404,
+      headers
+    });
+
+  }
+
+
+  return Response.json({
+
+    success: true,
+
+    data:
+      pamphlet
+
+  }, {
+    headers
+  });
+
+}
+
+
+// ==================================================
+// TAMBAH PAMPHLET
+// ==================================================
+
+if (
+  url.pathname === "/event-schedules" &&
+  request.method === "POST"
+) {
+
+  const body =
+    await request.json();
+
+
+  const image =
+    typeof body.image === "string"
+      ? body.image.trim()
+      : "";
+
+
+  // ==========================
+  // VALIDASI
+  // ==========================
+
+  if (!image) {
+
+    return Response.json({
+
+      success: false,
+
+      message:
+        "Gambar pamflet wajib diisi"
+
+    }, {
+      status: 400,
+      headers
+    });
+
+  }
+
+
+  // ==========================
+  // INSERT
+  // ==========================
+
+  const result =
+    await env.DB
+      .prepare(`
+        INSERT INTO event_pamphlets
+        (
+          image
+        )
+        VALUES (?)
+      `)
+      .bind(image)
+      .run();
+
+
+  return Response.json({
+
+    success: true,
+
+    message:
+      "Pamflet berhasil ditambahkan",
+
+    event_pamphlet_id:
+      result.meta.last_row_id
+
+  }, {
+    status: 201,
+    headers
+  });
+
+}
+
+
+// ==================================================
+// DELETE PAMPHLET
+// ==================================================
+
+if (
+  eventPamphletMatch &&
+  request.method === "DELETE"
+) {
+
+  const id =
+    Number(eventPamphletMatch[1]);
+
+
+  // ==========================
+  // CEK PAMPHLET
+  // ==========================
+
+  const existing =
+    await env.DB
+      .prepare(`
+        SELECT
+          id
+        FROM event_pamphlets
+        WHERE id = ?
+      `)
+      .bind(id)
+      .first();
+
+
+  if (!existing) {
+
+    return Response.json({
+
+      success: false,
+
+      message:
+        "Pamflet tidak ditemukan"
+
+    }, {
+      status: 404,
+      headers
+    });
+
+  }
+
+
+  // ==========================
+  // DELETE
+  // ==========================
+
+  await env.DB
+    .prepare(`
+      DELETE FROM event_pamphlets
+      WHERE id = ?
+    `)
+    .bind(id)
+    .run();
+
+
+  return Response.json({
+
+    success: true,
+
+    message:
+      "Pamflet berhasil dihapus"
+
+  }, {
+    headers
+  });
+
+}
+  
       // ==================================================
       // 404
       // ==================================================
