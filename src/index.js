@@ -837,8 +837,420 @@ export default {
         });
 
       }
+      // ==================================================
+      // SCHEDULES
+      // ==================================================
+
+      // ==========================
+      // GET SEMUA JADWAL
+      // ==========================
+
+      if (
+        url.pathname === "/schedules" &&
+        request.method === "GET"
+      ) {
+
+        const result =
+          await env.DB
+            .prepare(`
+              SELECT
+                id,
+                title,
+                schedule_date,
+                schedule_time,
+                location,
+                description,
+                created_at
+              FROM schedules
+              ORDER BY
+                schedule_date ASC,
+                schedule_time ASC,
+                id ASC
+            `)
+            .all();
 
 
+        return Response.json({
+
+          success: true,
+
+          schedules:
+            result.results || []
+
+        }, {
+          headers
+        });
+
+      }
+
+
+      // ==========================
+      // SCHEDULE ID
+      // ==========================
+
+      const scheduleMatch =
+        url.pathname.match(
+          /^\/schedules\/(\d+)$/
+        );
+
+
+      // ==========================
+      // GET SATU JADWAL
+      // ==========================
+
+      if (
+        scheduleMatch &&
+        request.method === "GET"
+      ) {
+
+        const id =
+          Number(scheduleMatch[1]);
+
+
+        const schedule =
+          await env.DB
+            .prepare(`
+              SELECT
+                id,
+                title,
+                schedule_date,
+                schedule_time,
+                location,
+                description,
+                created_at
+              FROM schedules
+              WHERE id = ?
+            `)
+            .bind(id)
+            .first();
+
+
+        if (!schedule) {
+
+          return Response.json({
+
+            success: false,
+
+            message:
+              "Jadwal tidak ditemukan"
+
+          }, {
+            status: 404,
+            headers
+          });
+
+        }
+
+
+        return Response.json({
+
+          success: true,
+
+          schedule
+
+        }, {
+          headers
+        });
+
+      }
+
+
+      // ==========================
+      // TAMBAH JADWAL
+      // ==========================
+
+      if (
+        url.pathname === "/schedules" &&
+        request.method === "POST"
+      ) {
+
+        const body =
+          await request.json();
+
+
+        const title =
+          typeof body.title === "string"
+            ? body.title.trim()
+            : "";
+
+        const schedule_date =
+          typeof body.schedule_date === "string"
+            ? body.schedule_date.trim()
+            : "";
+
+        const schedule_time =
+          typeof body.schedule_time === "string"
+            ? body.schedule_time.trim()
+            : "";
+
+        const location =
+          typeof body.location === "string"
+            ? body.location.trim()
+            : "";
+
+        const description =
+          typeof body.description === "string"
+            ? body.description.trim()
+            : "";
+
+
+        // ==========================
+        // VALIDASI
+        // ==========================
+
+        if (
+          !title ||
+          !schedule_date
+        ) {
+
+          return Response.json({
+
+            success: false,
+
+            message:
+              "Judul dan tanggal wajib diisi"
+
+          }, {
+            status: 400,
+            headers
+          });
+
+        }
+
+
+        // ==========================
+        // INSERT
+        // ==========================
+
+        const result =
+          await env.DB
+            .prepare(`
+              INSERT INTO schedules
+              (
+                title,
+                schedule_date,
+                schedule_time,
+                location,
+                description
+              )
+
+              VALUES (?, ?, ?, ?, ?)
+            `)
+            .bind(
+              title,
+              schedule_date,
+              schedule_time || null,
+              location || null,
+              description || null
+            )
+            .run();
+
+
+        return Response.json({
+
+          success: true,
+
+          message:
+            "Jadwal berhasil dibuat",
+
+          schedule_id:
+            result.meta.last_row_id
+
+        }, {
+          status: 201,
+          headers
+        });
+
+      }
+
+
+      // ==========================
+      // UPDATE JADWAL
+      // ==========================
+
+      if (
+        scheduleMatch &&
+        request.method === "PUT"
+      ) {
+
+        const id =
+          Number(scheduleMatch[1]);
+
+
+        const body =
+          await request.json();
+
+
+        const title =
+          typeof body.title === "string"
+            ? body.title.trim()
+            : "";
+
+        const schedule_date =
+          typeof body.schedule_date === "string"
+            ? body.schedule_date.trim()
+            : "";
+
+        const schedule_time =
+          typeof body.schedule_time === "string"
+            ? body.schedule_time.trim()
+            : "";
+
+        const location =
+          typeof body.location === "string"
+            ? body.location.trim()
+            : "";
+
+        const description =
+          typeof body.description === "string"
+            ? body.description.trim()
+            : "";
+
+
+        // ==========================
+        // VALIDASI
+        // ==========================
+
+        if (
+          !title ||
+          !schedule_date
+        ) {
+
+          return Response.json({
+
+            success: false,
+
+            message:
+              "Judul dan tanggal wajib diisi"
+
+          }, {
+            status: 400,
+            headers
+          });
+
+        }
+
+
+        // ==========================
+        // UPDATE
+        // ==========================
+
+        const result =
+          await env.DB
+            .prepare(`
+              UPDATE schedules
+
+              SET
+                title = ?,
+                schedule_date = ?,
+                schedule_time = ?,
+                location = ?,
+                description = ?
+
+              WHERE id = ?
+            `)
+            .bind(
+              title,
+              schedule_date,
+              schedule_time || null,
+              location || null,
+              description || null,
+              id
+            )
+            .run();
+
+
+        if (
+          result.meta.changes === 0
+        ) {
+
+          return Response.json({
+
+            success: false,
+
+            message:
+              "Jadwal tidak ditemukan"
+
+          }, {
+            status: 404,
+            headers
+          });
+
+        }
+
+
+        return Response.json({
+
+          success: true,
+
+          message:
+            "Jadwal berhasil diperbarui"
+
+        }, {
+          headers
+        });
+
+      }
+
+
+      // ==========================
+      // DELETE JADWAL
+      // ==========================
+
+      if (
+        scheduleMatch &&
+        request.method === "DELETE"
+      ) {
+
+        const id =
+          Number(scheduleMatch[1]);
+
+
+        // ==========================
+        // DELETE
+        // ==========================
+
+        const result =
+          await env.DB
+            .prepare(`
+              DELETE FROM schedules
+              WHERE id = ?
+            `)
+            .bind(id)
+            .run();
+
+
+        if (
+          result.meta.changes === 0
+        ) {
+
+          return Response.json({
+
+            success: false,
+
+            message:
+              "Jadwal tidak ditemukan"
+
+          }, {
+            status: 404,
+            headers
+          });
+
+        }
+
+
+        return Response.json({
+
+          success: true,
+
+          message:
+            "Jadwal berhasil dihapus"
+
+        }, {
+          headers
+        });
+
+          }
       // ==================================================
       // 404
       // ==================================================
