@@ -838,6 +838,88 @@ export default {
 
       }
 
+      // ==================================================
+      // SIMPAN LINK FOLDER PAMFLET
+      // ==================================================
+
+      if (
+        url.pathname === "/pamflet/folder" &&
+        request.method === "POST"
+      ) {
+
+        const body =
+          await request.json();
+
+
+        const folder_url =
+          typeof body.folder_url === "string"
+            ? body.folder_url.trim()
+            : "";
+
+
+        // ==========================
+        // VALIDASI
+        // ==========================
+
+        if (!folder_url) {
+
+          return Response.json({
+
+            success: false,
+
+            message:
+              "Link folder wajib diisi"
+
+          }, {
+            status: 400,
+            headers
+          });
+
+        }
+
+
+        // ==========================
+        // HAPUS LINK LAMA
+        // ==========================
+
+        await env.DB
+          .prepare(`
+            DELETE FROM pamphlet_settings
+          `)
+          .run();
+
+
+        // ==========================
+        // SIMPAN LINK BARU
+        // ==========================
+
+        await env.DB
+          .prepare(`
+            INSERT INTO pamphlet_settings
+            (
+              folder_url
+            )
+
+            VALUES (?)
+          `)
+          .bind(
+            folder_url
+          )
+          .run();
+
+
+        return Response.json({
+
+          success: true,
+
+          message:
+            "Link folder pamflet berhasil disimpan"
+
+        }, {
+          headers
+        });
+
+      }
     
       // ==================================================
       // SCHEDULES
